@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zoro - Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Header with user info and logout button -->
+        <div class="header">
+            <div class="user-info">
+                <span>Username: {{ session['username'] }}</span>
+                <span>Role: {{ session['role'] }}</span>
+            </div>
+            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+        </div>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Navigation Tabs -->
+        <div class="tabs">
+            <a href="{{ url_for('files') }}" class="tab {% if active_tab == 'files' %}active{% endif %}">Files</a>
+            <a href="{{ url_for('upload') }}" class="tab {% if active_tab == 'upload' %}active{% endif %}">Upload</a>
+            {% if session['role'] == 'admin' %}
+                <a href="{{ url_for('audit') }}" class="tab {% if active_tab == 'audit' %}active{% endif %}">Audit Logs</a>
+            {% endif %}
+        </div>
+
+        <!-- Content Box for tab content -->
+        <div class="content-box">
+            <!-- Files Tab Content -->
+            {% if active_tab == 'files' %}
+                <h2>My Files</h2>
+                {% if files and files|length > 0 %}
+                    <table class="files-table">
+                        <thead>
+                            <tr>
+                                <th>Filename</th>
+                                <th>Upload Date</th>
+                                <th>Uploaded By</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for file in files %}
+                                <tr>
+                                    <td>{{ file['filename'] }}</td>
+                                    <td>{{ file['upload_date'] }}</td>
+                                    <td>{{ file['uploaded_by'] }}</td>
+                                    <td>
+                                        <a href="{{ url_for('download', file_id=file['id']) }}" class="download-btn">Download</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>No files found. Use the Upload tab to add files.</p>
+                {% endif %}
+            
+            <!-- Upload Tab Content -->
+            {% elif active_tab == 'upload' %}
+                <h2>Upload New File</h2>
+                <div class="upload-section">
+                    <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+                        <div class="file-input">
+                            <input type="file" name="file" required>
+                        </div>
+                        <button type="submit" class="btn-primary">Upload File</button>
+                    </form>
+                </div>
+            
+            <!-- Audit Logs Tab Content (Admin Only) -->
+            {% elif active_tab == 'audit' and session['role'] == 'admin' %}
+                <h2>Audit Logs</h2>
+                <div class="audit-logs">
+                    {% if logs and logs|length > 0 %}
+                        <table class="files-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Action</th>
+                                    <th>Username</th>
+                                    <th>Filename</th>
+                                    <th>Timestamp</th>
+                                    <th>Blockchain TX</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in logs %}
+                                    <tr>
+                                        <td>{{ log['id'] }}</td>
+                                        <td>{{ log['action'] }}</td>
+                                        <td>{{ log['username'] }}</td>
+                                        <td>{{ log['filename'] }}</td>
+                                        <td>{{ log['timestamp'] }}</td>
+                                        <td><small>{{ log['blockchain_tx'] }}</small></td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p>No audit logs found.</p>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
+
